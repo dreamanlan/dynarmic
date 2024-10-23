@@ -30,6 +30,11 @@ struct A32JitState {
     alignas(16) std::array<u32, 64> ext_regs{};
 
     u32 exclusive_state = 0;
+    
+    u64 code_pc = 0;
+    u64 last_code_pc = 0;
+    u64 code = 0;
+    u64 last_code = 0;
 
     u32 Cpsr() const;
     void SetCpsr(u32 cpsr);

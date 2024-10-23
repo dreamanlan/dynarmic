@@ -40,7 +40,12 @@ public:
             , fpcr((o.Value() >> fpcr_shift) & fpcr_mask)
             , single_stepping(mcl::bit::get_bit<single_stepping_bit>(o.Value())) {}
 
-    u64 PC() const { return mcl::bit::sign_extend<pc_bit_count>(pc); }
+    u64 PC() const {
+        if (pc == 0) {
+            printf("pc == 0\n");
+        }
+        return mcl::bit::sign_extend<pc_bit_count>(pc);
+    }
     FP::FPCR FPCR() const { return fpcr; }
     bool SingleStepping() const { return single_stepping; }
 

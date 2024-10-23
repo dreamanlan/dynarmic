@@ -26,6 +26,11 @@ struct A64JitState {
 
     u32 fpsr = 0;
     u32 fpcr = 0;
+    
+    u64 code_pc = 0;
+    u64 last_code_pc = 0;
+    u64 code = 0;
+    u64 last_code = 0;
 
     IR::LocationDescriptor GetLocationDescriptor() const {
         const u64 fpcr_u64 = static_cast<u64>(fpcr & A64::LocationDescriptor::fpcr_mask) << A64::LocationDescriptor::fpcr_shift;

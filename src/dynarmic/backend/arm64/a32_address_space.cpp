@@ -184,6 +184,19 @@ IR::Block A32AddressSpace::GenerateIR(IR::LocationDescriptor descriptor, u64& pc
     return ir_block;
 }
 
+CodePtr A32AddressSpace::GetOrEmit(A32JitState& context) {
+    auto location = context.GetLocationDescriptor();
+    if (location.Value() == 0) {
+        printf("GetOrEmit pc == 0\n");
+    }
+    auto codePtr = AddressSpace::GetOrEmit(location);
+    context.last_code_pc = context.code_pc;
+    context.code_pc = location.Value();
+    context.last_code = context.code;
+    context.code = reinterpret_cast<u64>(codePtr);
+    return codePtr;
+}
+
 void A32AddressSpace::InvalidateCacheRanges(const boost::icl::interval_set<u32>& ranges) {
     InvalidateBasicBlocks(block_ranges.InvalidateRanges(ranges));
 }
@@ -512,7 +525,7 @@ void A32AddressSpace::EmitPrelude() {
         code.BR(X0);
 
         const auto fn = [](A32AddressSpace& self, A32JitState& context) -> CodePtr {
-            return self.GetOrEmit(context.GetLocationDescriptor());
+            return self.GetOrEmit(context);
         };
 
         code.align(8);

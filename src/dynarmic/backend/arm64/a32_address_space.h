@@ -12,13 +12,14 @@
 namespace Dynarmic::Backend::Arm64 {
 
 struct EmittedBlockInfo;
-
+struct A32JitState;
 class A32AddressSpace final : public AddressSpace {
 public:
     explicit A32AddressSpace(const A32::UserConfig& conf);
 
     IR::Block GenerateIR(IR::LocationDescriptor, u64& pc, u32& inst) const override;
-
+    CodePtr GetOrEmit(A32JitState& context);
+    CodePtr GetOrEmit(IR::LocationDescriptor descriptor) { return AddressSpace::GetOrEmit(descriptor); }
     void InvalidateCacheRanges(const boost::icl::interval_set<u32>& ranges);
 
     void Initialize(u32 _halt_reason_on_run, u64 _trace_scope_begin, u64 _trace_scope_end) {

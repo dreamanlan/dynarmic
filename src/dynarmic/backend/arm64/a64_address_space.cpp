@@ -351,6 +351,19 @@ IR::Block A64AddressSpace::GenerateIR(IR::LocationDescriptor descriptor, u64& pc
     return ir_block;
 }
 
+CodePtr A64AddressSpace::GetOrEmit(A64JitState& context) {
+    auto location = context.GetLocationDescriptor();
+    if (location.Value() == 0) {
+        printf("GetOrEmit pc == 0\n");
+    }
+    auto codePtr = AddressSpace::GetOrEmit(location);
+    context.last_code_pc = context.code_pc;
+    context.code_pc = location.Value();
+    context.last_code = context.code;
+    context.code = reinterpret_cast<u64>(codePtr);
+    return codePtr;
+}
+
 void A64AddressSpace::InvalidateCacheRanges(const boost::icl::interval_set<u64>& ranges) {
     InvalidateBasicBlocks(block_ranges.InvalidateRanges(ranges));
 }
@@ -687,7 +700,7 @@ void A64AddressSpace::EmitPrelude() {
         code.BR(X0);
 
         const auto fn = [](A64AddressSpace& self, A64JitState& context) -> CodePtr {
-            return self.GetOrEmit(context.GetLocationDescriptor());
+            return self.GetOrEmit(context);
         };
 
         code.align(8);
