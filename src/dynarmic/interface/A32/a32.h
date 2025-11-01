@@ -22,7 +22,7 @@ public:
     explicit Jit(UserConfig conf);
     ~Jit();
 
-    void Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd);
+    void Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd, dbgscpHookOnFastmemCallbackPtr fptr);
 
     /**
      * Runs the emulated CPU.

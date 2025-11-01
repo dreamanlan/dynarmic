@@ -9,6 +9,8 @@
 
 namespace Dynarmic {
 
+typedef void (*dbgscpHookOnFastmemCallbackPtr)(bool& retry, std::uint64_t fcAddr, std::uint64_t thisAddr, std::uint64_t& host_pc, int failType);
+
 enum class HaltReason : std::uint32_t {
     Step = 0x00000001,
     CacheInvalidation = 0x00000002,

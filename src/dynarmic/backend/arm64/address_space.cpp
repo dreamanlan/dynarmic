@@ -24,7 +24,8 @@ AddressSpace::AddressSpace(size_t code_cache_size)
         : code_cache_size(code_cache_size)
         , mem(code_cache_size)
         , code(mem.ptr(), mem.ptr())
-        , fastmem_manager(exception_handler) {
+        , fastmem_manager(exception_handler)
+        , hook_on_fastmem_callback_ptr(nullptr) {
     ASSERT_MSG(code_cache_size <= 128 * 1024 * 1024, "code_cache_size > 128 MiB not currently supported");
 
     exception_handler.Register(mem, code_cache_size);
@@ -317,39 +318,58 @@ void AddressSpace::RelinkForDescriptor(IR::LocationDescriptor target_descriptor,
 }
 
 FakeCall AddressSpace::FastmemCallback(u64 host_pc) {
-    {
-        const auto host_ptr = mcl::bit_cast<CodePtr>(host_pc);
-
-        const auto entry_point = ReverseGetEntryPoint(host_ptr);
-        if (!entry_point) {
-            goto fail;
+    int failType = 0;
+    auto f = [this, &host_pc, &failType](){
+        
+        {
+            const auto host_ptr = mcl::bit_cast<CodePtr>(host_pc);
+            
+            const auto entry_point = ReverseGetEntryPoint(host_ptr);
+            if (!entry_point) {
+                failType = 1;
+                goto fail;
+            }
+            
+            const auto block_info = block_infos.find(entry_point);
+            if (block_info == block_infos.end()) {
+                failType = 2;
+                goto fail;
+            }
+            
+            const auto patch_entry = block_info->second.fastmem_patch_info.find(host_ptr - entry_point);
+            if (patch_entry == block_info->second.fastmem_patch_info.end()) {
+                failType = 3;
+                goto fail;
+            }
+            
+            const auto fc = patch_entry->second.fc;
+            
+            if (patch_entry->second.recompile) {
+                const auto marker = patch_entry->second.marker;
+                fastmem_manager.MarkDoNotFastmem(marker);
+                InvalidateBasicBlocks({std::get<0>(marker)});
+            }
+            
+            return fc;
         }
-
-        const auto block_info = block_infos.find(entry_point);
-        if (block_info == block_infos.end()) {
-            goto fail;
-        }
-
-        const auto patch_entry = block_info->second.fastmem_patch_info.find(host_ptr - entry_point);
-        if (patch_entry == block_info->second.fastmem_patch_info.end()) {
-            goto fail;
-        }
-
-        const auto fc = patch_entry->second.fc;
-
-        if (patch_entry->second.recompile) {
-            const auto marker = patch_entry->second.marker;
-            fastmem_manager.MarkDoNotFastmem(marker);
-            InvalidateBasicBlocks({std::get<0>(marker)});
-        }
-
-        return fc;
+        
+    fail:
+        fmt::print("dynarmic: Segfault happened within JITted code at host_pc = {:016x}\n", host_pc);
+        fmt::print("Segfault wasn't at a fastmem patch location!\n");
+        //ASSERT_FALSE("segfault");
+        
+        return FakeCall();
+    };
+    
+    auto&& r = f();
+    bool retry = false;
+    u64 fcAddr = reinterpret_cast<u64>(&r);
+    u64 thisAddr = reinterpret_cast<u64>(this);
+    hook_on_fastmem_callback_ptr(retry, fcAddr, thisAddr, host_pc, failType);
+    if (retry) {
+        r = f();
     }
-
-fail:
-    fmt::print("dynarmic: Segfault happened within JITted code at host_pc = {:016x}\n", host_pc);
-    fmt::print("Segfault wasn't at a fastmem patch location!\n");
-    ASSERT_FALSE("segfault");
+    return r;
 }
 
 }  // namespace Dynarmic::Backend::Arm64

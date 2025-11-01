@@ -323,7 +323,10 @@ static void* EmitExclusiveWrite128CallTrampoline(oaknut::CodeGenerator& code, co
 
 A64AddressSpace::A64AddressSpace(const A64::UserConfig& conf)
         : AddressSpace(conf.code_cache_size)
-        , conf(conf) {
+        , conf(conf)
+        , halt_reason_on_run(0)
+        , trace_scope_begin(0)
+        , trace_scope_end(0) {
 }
 
 IR::Block A64AddressSpace::GenerateIR(IR::LocationDescriptor descriptor, u64& pc, u32& inst) const {

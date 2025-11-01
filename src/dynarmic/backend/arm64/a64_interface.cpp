@@ -28,8 +28,8 @@ struct Jit::Impl final {
             , current_address_space(conf)
             , core(conf) {}
 
-    void Initialize([[maybe_unused]]u32 halt_reason_on_run, [[maybe_unused]]u64 traceScopeBegin, [[maybe_unused]]u64 traceScopeEnd) {
-        current_address_space.Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd);
+    void Initialize([[maybe_unused]]u32 halt_reason_on_run, [[maybe_unused]]u64 traceScopeBegin, [[maybe_unused]]u64 traceScopeEnd, [[maybe_unused]]dbgscpHookOnFastmemCallbackPtr fptr) {
+        current_address_space.Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd, fptr);
     }
 
     HaltReason Run() {
@@ -215,8 +215,8 @@ Jit::Jit(UserConfig conf)
 
 Jit::~Jit() = default;
 
-void Jit::Initialize([[maybe_unused]]u32 halt_reason_on_run, [[maybe_unused]]u64 traceScopeBegin, [[maybe_unused]]u64 traceScopeEnd) {
-    impl->Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd);
+void Jit::Initialize([[maybe_unused]]u32 halt_reason_on_run, [[maybe_unused]]u64 traceScopeBegin, [[maybe_unused]]u64 traceScopeEnd, [[maybe_unused]]dbgscpHookOnFastmemCallbackPtr fptr) {
+    impl->Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd, fptr);
 }
 
 HaltReason Jit::Run() {

@@ -82,6 +82,7 @@ protected:
 
     ExceptionHandler exception_handler;
     FastmemManager fastmem_manager;
+    dbgscpHookOnFastmemCallbackPtr hook_on_fastmem_callback_ptr;
 
     struct PreludeInfo {
         std::ptrdiff_t end_of_prelude;
