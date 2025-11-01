@@ -44,7 +44,7 @@ public:
     A32EmitX64(BlockOfCode& code, A32::UserConfig conf, A32::Jit* jit_interface);
     ~A32EmitX64() override;
 
-    void Initialize();
+    void Initialize(DbgScpHookOnFastmemCallbackPtr fptr);
 
     /**
      * Emit host machine code for a basic block with intermediate representation `block`.
@@ -60,6 +60,7 @@ protected:
     const A32::UserConfig conf;
     A32::Jit* jit_interface;
     BlockRangeInformation<u32> block_ranges;
+    DbgScpHookOnFastmemCallbackPtr hook_on_fastmem_callback_ptr;
 
     void EmitCondPrelude(const A32EmitContext& ctx);
 

@@ -27,28 +27,42 @@ std::optional<AxxEmitX64::DoNotFastmemMarker> AxxEmitX64::ShouldFastmem(AxxEmitC
 }
 
 FakeCall AxxEmitX64::FastmemCallback(u64 rip_) {
-    const auto iter = fastmem_patch_info.find(rip_);
+    int failType = 0;
+    auto f = [this, &rip_, &failType]() {
+        const auto iter = fastmem_patch_info.find(rip_);
 
-    if (iter == fastmem_patch_info.end()) {
-        fmt::print("dynarmic: Segfault happened within JITted code at rip = {:016x}\n", rip_);
-        fmt::print("Segfault wasn't at a fastmem patch location!\n");
-        fmt::print("Now dumping code.......\n\n");
-        Common::DumpDisassembledX64((void*)(rip_ & ~u64(0xFFF)), 0x1000);
-        ASSERT_FALSE("iter != fastmem_patch_info.end()");
-    }
+        if (iter == fastmem_patch_info.end()) {
+            fmt::print("dynarmic: Segfault happened within JITted code at rip = {:016x}\n", rip_);
+            fmt::print("Segfault wasn't at a fastmem patch location!\n");
+            fmt::print("Now dumping code.......\n\n");
+            Common::DumpDisassembledX64((void*)(rip_ & ~u64(0xFFF)), 0x1000);
+            //ASSERT_FALSE("iter != fastmem_patch_info.end()");
+            return FakeCall();
+        }
 
-    FakeCall result{
-        .call_rip = iter->second.callback,
-        .ret_rip = iter->second.resume_rip,
+        FakeCall result{
+            .call_rip = iter->second.callback,
+            .ret_rip = iter->second.resume_rip,
+        };
+
+        if (iter->second.recompile) {
+            const auto marker = iter->second.marker;
+            do_not_fastmem.insert(marker);
+            InvalidateBasicBlocks({std::get<0>(marker)});
+        }
+
+        return result;
     };
 
-    if (iter->second.recompile) {
-        const auto marker = iter->second.marker;
-        do_not_fastmem.insert(marker);
-        InvalidateBasicBlocks({std::get<0>(marker)});
+    auto&& r = f();
+    bool retry = false;
+    u64 fcAddr = reinterpret_cast<u64>(&r);
+    u64 thisAddr = reinterpret_cast<u64>(this);
+    hook_on_fastmem_callback_ptr(retry, fcAddr, thisAddr, rip_, failType);
+    if (retry) {
+        r = f();
     }
-
-    return result;
+    return r;
 }
 
 template<std::size_t bitsize, auto callback>

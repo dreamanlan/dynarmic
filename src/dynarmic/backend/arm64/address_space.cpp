@@ -319,48 +319,39 @@ void AddressSpace::RelinkForDescriptor(IR::LocationDescriptor target_descriptor,
 
 FakeCall AddressSpace::FastmemCallback(u64 host_pc) {
     int failType = 0;
-    auto f = [this, &host_pc, &failType](){
-        
+    auto f = [this, &host_pc, &failType]() {
         {
             const auto host_ptr = mcl::bit_cast<CodePtr>(host_pc);
-            
             const auto entry_point = ReverseGetEntryPoint(host_ptr);
             if (!entry_point) {
                 failType = 1;
                 goto fail;
             }
-            
             const auto block_info = block_infos.find(entry_point);
             if (block_info == block_infos.end()) {
                 failType = 2;
                 goto fail;
             }
-            
             const auto patch_entry = block_info->second.fastmem_patch_info.find(host_ptr - entry_point);
             if (patch_entry == block_info->second.fastmem_patch_info.end()) {
                 failType = 3;
                 goto fail;
             }
-            
             const auto fc = patch_entry->second.fc;
-            
             if (patch_entry->second.recompile) {
                 const auto marker = patch_entry->second.marker;
                 fastmem_manager.MarkDoNotFastmem(marker);
                 InvalidateBasicBlocks({std::get<0>(marker)});
             }
-            
             return fc;
         }
-        
     fail:
         fmt::print("dynarmic: Segfault happened within JITted code at host_pc = {:016x}\n", host_pc);
         fmt::print("Segfault wasn't at a fastmem patch location!\n");
         //ASSERT_FALSE("segfault");
-        
         return FakeCall();
     };
-    
+
     auto&& r = f();
     bool retry = false;
     u64 fcAddr = reinterpret_cast<u64>(&r);

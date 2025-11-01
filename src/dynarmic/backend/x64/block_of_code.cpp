@@ -225,7 +225,10 @@ BlockOfCode::BlockOfCode(RunCodeCallbacks&& cb, JitStateInfo jsi, size_t total_c
         , jsi(jsi)
         , constant_pool(*this, CONSTANT_POOL_SIZE)
         , host_features(GetHostFeatures())
-        , rcp(std::move(_rcp)) {
+        , rcp(std::move(_rcp))
+        , halt_reason_on_run(0)
+        , trace_scope_begin(0)
+        , trace_scope_end(0) {
     EnableWriting();
     EnsureMemoryCommitted(PRELUDE_COMMIT_SIZE);
 }

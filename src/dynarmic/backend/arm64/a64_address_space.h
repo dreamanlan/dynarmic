@@ -23,7 +23,7 @@ public:
 
     void InvalidateCacheRanges(const boost::icl::interval_set<u64>& ranges);
 
-    void Initialize(u32 _halt_reason_on_run, u64 _trace_scope_begin, u64 _trace_scope_end, dbgscpHookOnFastmemCallbackPtr fptr) {
+    void Initialize(u32 _halt_reason_on_run, u64 _trace_scope_begin, u64 _trace_scope_end, DbgScpHookOnFastmemCallbackPtr fptr) {
         halt_reason_on_run = _halt_reason_on_run;
         trace_scope_begin = _trace_scope_begin;
         trace_scope_end = _trace_scope_end;

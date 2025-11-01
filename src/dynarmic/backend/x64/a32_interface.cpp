@@ -69,9 +69,9 @@ struct Jit::Impl {
 
     ~Impl() = default;
 
-    void Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd) {
+    void Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd, DbgScpHookOnFastmemCallbackPtr fptr) {
         block_of_code.Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd);
-        emitter.Initialize();
+        emitter.Initialize(fptr);
     }
 
     HaltReason Run() {
@@ -292,8 +292,8 @@ Jit::Jit(UserConfig conf)
 
 Jit::~Jit() = default;
 
-void Jit::Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd) {
-    impl->Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd);
+void Jit::Initialize(u32 halt_reason_on_run, u64 traceScopeBegin, u64 traceScopeEnd, DbgScpHookOnFastmemCallbackPtr fptr) {
+    impl->Initialize(halt_reason_on_run, traceScopeBegin, traceScopeEnd, fptr);
 }
 
 HaltReason Jit::Run() {

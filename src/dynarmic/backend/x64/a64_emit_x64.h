@@ -41,7 +41,7 @@ public:
     A64EmitX64(BlockOfCode& code, A64::UserConfig conf, A64::Jit* jit_interface);
     ~A64EmitX64() override;
 
-    void Initialize();
+    void Initialize(DbgScpHookOnFastmemCallbackPtr fptr);
 
     /**
      * Emit host machine code for a basic block with intermediate representation `block`.
@@ -57,6 +57,7 @@ protected:
     const A64::UserConfig conf;
     A64::Jit* jit_interface;
     BlockRangeInformation<u64> block_ranges;
+    DbgScpHookOnFastmemCallbackPtr hook_on_fastmem_callback_ptr;
 
     struct FastDispatchEntry {
         u64 location_descriptor = 0xFFFF'FFFF'FFFF'FFFFull;
